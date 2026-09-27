@@ -19,7 +19,10 @@ import {
 } from "./requests";
 
 const onResolutionConfirmed = vi.fn();
-vi.mock("./awards", () => ({ onResolutionConfirmed: (...args: unknown[]) => onResolutionConfirmed(...args) }));
+vi.mock("./awards", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./awards")>()),
+  onResolutionConfirmed: (...args: unknown[]) => onResolutionConfirmed(...args),
+}));
 
 const blocker = postRequestSchema.parse({
   title: "Container exits on the VM",

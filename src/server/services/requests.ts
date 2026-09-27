@@ -17,7 +17,7 @@ import type postgres from "postgres";
 import type { Tx } from "@/server/db/client";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors";
 import { emitActivity } from "@/server/events";
-import { onResolutionConfirmed } from "./awards";
+import { getAwardForRequest, onResolutionConfirmed, type AwardView } from "./awards";
 
 // Every state change here runs in the caller's transaction: it locks the request, asks the
 // state machine whether the actor's team may make the move, writes the change, adds a
@@ -282,7 +282,7 @@ export async function confirmOutcome(
   tx: Tx,
   actor: Viewer,
   requestId: string,
-): Promise<RequestRef & { reconfirmed: boolean }> {
+): Promise<RequestRef & { reconfirmed: boolean; award: AwardView | null }> {
   const member = assertTeamMember(actor);
   const row = await loadRequest(tx, requestId, true);
   authorize("confirm", row, member);
@@ -317,16 +317,17 @@ export async function confirmOutcome(
     payload: { outcomeId: outcome.id },
   });
 
-  if (!reconfirmed) {
-    await onResolutionConfirmed(tx, {
-      requestId,
-      requestingTeamId: row.requesting_team_id,
-      helpingTeamId,
-      outcomeId: outcome.id,
-      confirmedAt: now,
-    });
-  }
-  return { ...ref(row), reconfirmed };
+  const award = reconfirmed
+    ? null
+    : await onResolutionConfirmed(tx, {
+        requestId,
+        requestingTeamId: row.requesting_team_id,
+        helpingTeamId,
+        outcomeId: outcome.id,
+        confirmedBy: member.userId,
+        confirmedAt: now,
+      });
+  return { ...ref(row), reconfirmed, award: award ?? null };
 }
 
 /** Back to the board for anyone to take. The confirmed outcome, and any award, stay. */
@@ -475,6 +476,8 @@ export type RequestView = {
   canSendMessage: boolean;
   /** Only for viewers who can see the thread. */
   outcomes: OutcomeView[] | null;
+  /** The request's award and its scoring explanation, once the fix is confirmed. */
+  award: AwardView | null;
 };
 
 /** A request's details. Anyone signed in sees the blocker; outcomes need thread access. */
@@ -522,6 +525,7 @@ export async function getRequestView(tx: Tx, actor: Viewer, requestId: string): 
     canViewThread,
     canSendMessage: Boolean(viewer.team) && canSendMessage(request.status, request.party),
     outcomes,
+    award: await getAwardForRequest(tx, requestId),
   };
 }
 

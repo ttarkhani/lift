@@ -53,6 +53,11 @@ export async function removeTeams(sql: Sql, teams: TeamViewer[]): Promise<void> 
     const requests = tx`select id from help_requests where requesting_team_id in ${tx(teamIds)} or helping_team_id in ${tx(teamIds)}`;
     const users = tx`select user_id from team_members where team_id in ${tx(teamIds)}`;
     await tx`delete from activity_events where request_id in (${requests}) or team_id in ${tx(teamIds)} or counterpart_team_id in ${tx(teamIds)}`;
+    // The ledger is append-only; only test cleanup lifts that, inside this transaction.
+    await tx`alter table points_ledger disable trigger points_ledger_append_only`;
+    await tx`delete from points_ledger where award_id in (select id from awards where request_id in (${requests}))`;
+    await tx`alter table points_ledger enable trigger points_ledger_append_only`;
+    await tx`delete from awards where request_id in (${requests})`;
     await tx`delete from outcomes where request_id in (${requests})`;
     await tx`delete from messages where request_id in (${requests})`;
     await tx`delete from help_requests where id in (${requests})`;
