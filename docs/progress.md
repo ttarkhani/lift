@@ -5,7 +5,7 @@
 - [x] 1. Foundation: design system, page layouts, Tiger Data database and core schema
 - [x] 2. Accounts and teams: Auth0 login, team membership, participant and organizer roles, server-side access checks
 - [x] 3. Help workflow: post, accept, chat, submit outcome, confirm
-- [ ] 4. Scoring: the 20/5/0 pair rule, duplicate-award prevention, auditable points ledger
+- [x] 4. Scoring: the 20/5/0 pair rule, duplicate-award prevention, auditable points ledger
 - [ ] 5. Gemini review: contribution summaries, evidence-backed flags, organizer review queue
 - [ ] 6. Presentation: live leaderboard, contribution receipts, activity charts, labelled demo scenarios
 - [ ] 7. Deployment and verification: Vultr, end-to-end testing, fixes, demo rehearsal
@@ -66,3 +66,17 @@
 - The board and thread poll every 4 seconds with `usePoll`, which pauses while the tab is hidden. The thread only fetches messages newer than the last one it has.
 - Vitest runs test files one at a time (`fileParallelism: false`). The accept race needs committed data in two real transactions; `test/fixtures.ts` removes it afterwards, so the seeded counts in `db.integration.test.ts` still hold.
 - The mock blockers and threads are gone from `src/lib/mock.ts`. The leaderboard, receipts, and review queue still use mock awards until steps 4 to 6, so their "Request #104"-style links now go to 404 pages.
+
+### Step 4
+- The migration is `0005_scoring.sql`, since `0003` and `0004` were already taken. Besides the columns the step lists, `awards` keeps `outcome_id` (the request's first confirmed outcome, which the receipt links to) and `created_at`, and checks that `team_low_id`/`team_high_id` match the helper and recipient and that a reversed award has a reason.
+- `points_after` on a ledger row is the award's points after the change, so each award's deltas add up to its points. Team totals are the sum of a team's deltas. A row is written whenever an award's points or sequence change, including 0-point changes (a 3rd resolution, or one moving from 3rd to 4th), so the ledger shows every re-sequencing. Reasons: `awarded` for an award's first row, `reversed`, `restored` for a reversed award counting again, and `resequenced` for everything else. Rows caused by an organizer decision, including the other awards it re-sequences, carry that `organizer_action_id`.
+- The pair lock is `pg_advisory_xact_lock(hashtextextended('awards:<low>:<high>', 0))`. `reverseAward` and `restoreAward` take it before locking the award row, the same order `recomputePair` uses, so they can't deadlock with a confirmation.
+- An award's `confirmed_at` is the outcome's confirmation time at millisecond precision (as JavaScript carries it), so `sequencePair`'s ordering and the SQL index agree exactly.
+- `onResolutionConfirmed` returns the new award, so the confirm route says "Fix confirmed. Team Maple earned 20 points." with the real numbers. A reconfirmation after a reopen still says "Fix confirmed." The points-landing animation is left for step 6.
+- The leaderboard lists teams with at least one award that counts. "Teams helped" counts distinct recipients of those awards, including 0-point ones. "Reached the score first" is the time of the team's latest counted award worth more than 0; the team name breaks any tie that's left.
+- Receipts are public and show the request title, the helper's summary (what the requesting team confirmed), and the scoring explanation, never messages. The evidence link is the URL for link and screenshot evidence, and otherwise the outcome on the request page. The outcome and confirmation anchors only render for people who can see the thread (step 3's rule); everyone else lands on the blocker details.
+- A reversed award shows 0 points, its explanation ("Reversed by an organizer: …"), and the Reversed badge. Reverse and restore are API-only (`POST /api/awards/[id]/reverse` and `/restore`, body `{ "reason" }`) until step 5's review queue adds the buttons.
+- The team page reads members and skills from `getTeamProfile`, which is public like the receipt. `src/lib/mock.ts` now only feeds the review queue.
+- The seed resolves Maple's four blockers in its one transaction, so they share a confirmation time and are ordered by award id.
+- `npm run ledger:verify` is read-only and runs in one repeatable-read snapshot, so it's safe against production.
+- Test cleanup (`removeTeams`) turns off the ledger's append-only trigger inside its own transaction to remove committed test data. The concurrent-confirmation test holds both confirmations at the award insert with a share lock on `awards` and releases them together; without the pair lock it fails with two 20-point awards.
