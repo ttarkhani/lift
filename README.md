@@ -32,15 +32,30 @@ Helping a new team always starts at 20. For example, A helps B, B, C, then B: 20
 
 ## Getting started
 
-Prerequisites: Node 24 (see `.nvmrc`) and npm. Docker arrives in step 1.
+Prerequisites: Node 24 (see `.nvmrc`), npm, and Docker (or a free Tiger Cloud service, below).
 
 ```sh
 npm install
 cp .env.example .env.local
+npm run db:up        # starts TimescaleDB on localhost:5432 and waits until it's healthy
+npm run db:migrate   # applies db/migrations/*.sql
+npm run db:seed      # adds teams, members, and open blockers, and prints each team's invite code
 npm run dev
 ```
 
-Open http://localhost:3000. `GET /api/health` returns `{ "ok": true }`.
+Open http://localhost:3000. `GET /api/health` returns `{ "ok": true, "db": "up" }` when the database is reachable, and a 503 with `"db": "down"` when it isn't.
+
+The local database runs `timescale/timescaledb:latest-pg18` from `compose.yaml` with a named volume, so data survives restarts. The first start also creates a `lift_test` database for integration tests. `npm run db:reset` drops everything, migrates, and seeds again (local databases only). To wipe the volume completely, run `docker compose down -v`.
+
+### Using Tiger Cloud instead of Docker
+
+1. Create a free service at [console.cloud.tigerdata.com](https://console.cloud.tigerdata.com). New services run Postgres 18 with TimescaleDB, the same as the local container.
+2. Copy the service URL into `DATABASE_URL` in `.env.local`. Keep `?sslmode=require` on the end, because Tiger Cloud only accepts SSL connections.
+3. Run `npm run db:migrate`. Seeding a remote database needs `ALLOW_REMOTE_SEED=1`, and must never be run against production.
+
+If you use Tiger Cloud's connection pooler, the transaction pool is the database named `tsdb_transaction`. The app detects it and turns off prepared statements, which that pool doesn't support.
+
+Integration tests only ever use `TEST_DATABASE_URL`, and they wipe it on every run. It has to be a local database unless `CI` is set. When it's unset, those tests are skipped.
 
 ## Scripts
 
@@ -50,9 +65,13 @@ Open http://localhost:3000. `GET /api/health` returns `{ "ok": true }`.
 | `npm run build` | Builds the production app (standalone output). |
 | `npm run start` | Serves the production build. |
 | `npm run lint` | Runs ESLint. |
-| `npm run typecheck` | Type-checks with `tsc --noEmit`. |
-| `npm run test` | Runs the Vitest suite once. |
+| `npm run typecheck` | Generates route types with `next typegen`, then type-checks with `tsc --noEmit`. |
+| `npm run test` | Runs the Vitest suite once, including database integration tests when `TEST_DATABASE_URL` is set. |
 | `npm run check` | Runs lint, then typecheck, then tests. |
+| `npm run db:up` | Starts the local TimescaleDB container and waits until it's healthy. |
+| `npm run db:migrate` | Applies pending SQL migrations to `DATABASE_URL`. |
+| `npm run db:seed` | Seeds an empty database and prints invite codes. Refuses non-local databases unless `ALLOW_REMOTE_SEED=1`. |
+| `npm run db:reset` | Drops the schema, migrates, and seeds. Local databases only. |
 
 ## Project structure
 
@@ -64,7 +83,9 @@ src/domain/           pure logic and types: scoring, request states, schemas
 src/server/           env, errors, auth, database, and review code
 src/server/services/  business rules and state changes
 db/migrations/        numbered SQL migrations
+db/docker-init/       scripts the local database runs on first start
 scripts/              migrate, seed, demo, and check scripts
+test/                 Vitest global setup for the test database
 docs/                 brief, progress, design, and runbooks
 .github/workflows/    CI
 ```
@@ -74,7 +95,7 @@ docs/                 brief, progress, design, and runbooks
 | Step | What it adds | Run by |
 |---|---|---|
 | 0 | Project setup | ttarkhani |
-| 1 | Foundation: design system, page layouts, Tiger Data database and core schema | |
+| 1 | Foundation: design system, page layouts, Tiger Data database and core schema | ttarkhani |
 | 2 | Accounts and teams: Auth0 login, team membership, participant and organizer roles, server-side access checks | |
 | 3 | Help workflow: post, accept, chat, submit outcome, confirm | |
 | 4 | Scoring: the 20/5/0 pair rule, duplicate-award prevention, auditable points ledger | |
