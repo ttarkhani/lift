@@ -1,4 +1,4 @@
-// Mock data for the screens that steps 4 to 6 make real: leaderboard, receipts, and review queue.
+// Mock data for the review queue, which step 5 makes real. The leaderboard and receipts use real awards.
 
 import type { Skill } from "@/domain/types";
 
@@ -25,13 +25,6 @@ export type MockAward = {
   confirmedBy: string;
   confirmedAt: string;
   state: AwardState;
-};
-
-export type LeaderboardRow = {
-  team: MockTeam;
-  points: number;
-  teamsHelped: number;
-  resolutions: number;
 };
 
 export type ReviewCard = {
@@ -81,39 +74,6 @@ const awards: MockAward[] = [
 
 export function getTeam(slug: string): MockTeam | undefined {
   return teams.find((team) => team.slug === slug);
-}
-
-export function getTeams(): MockTeam[] {
-  return teams;
-}
-
-/** Awards the team earned, in confirmation order. */
-export function getReceipt(slug: string): MockAward[] {
-  return awards
-    .filter((award) => award.helper === slug)
-    .sort((a, b) => a.confirmedAt.localeCompare(b.confirmedAt));
-}
-
-/** Help the team received, newest first. */
-export function getHelpReceived(slug: string): MockAward[] {
-  return awards
-    .filter((award) => award.helped === slug)
-    .sort((a, b) => b.confirmedAt.localeCompare(a.confirmedAt));
-}
-
-export function getLeaderboard({ includeDemo }: { includeDemo: boolean }): LeaderboardRow[] {
-  return teams
-    .filter((team) => includeDemo || !team.isDemo)
-    .map((team) => {
-      const earned = awards.filter((a) => a.helper === team.slug && a.state !== "reversed");
-      return {
-        team,
-        points: earned.reduce((sum, a) => sum + a.points, 0),
-        teamsHelped: new Set(earned.map((a) => a.helped)).size,
-        resolutions: earned.length,
-      };
-    })
-    .sort((a, b) => b.points - a.points || b.teamsHelped - a.teamsHelped);
 }
 
 export function getReviewQueue(): ReviewCard[] {
