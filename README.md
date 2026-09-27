@@ -43,7 +43,9 @@ npm run db:seed      # adds teams, members, and open blockers, and prints each t
 npm run dev
 ```
 
-Open http://localhost:3000. `GET /api/health` returns `{ "ok": true, "db": "up" }` when the database is reachable, and a 503 with `"db": "down"` when it isn't.
+Fill in the `AUTH0_*` values in `.env.local` first. The Auth0 application, the `organizer` role, and the post-login Action are set up once per tenant; [docs/auth0-setup.md](docs/auth0-setup.md) walks through them and how to make someone an organizer. The team shares the Auth0 values privately, never through the repo. Without them the app still runs, but everyone is signed out.
+
+Open http://localhost:3000 (use `localhost`, not `127.0.0.1`, or login fails with a state mismatch). Log in, then join a team at `/join` with an invite code from `npm run db:seed` or from an organizer's **Teams** page. `GET /api/health` returns `{ "ok": true, "db": "up" }` when the database is reachable, and a 503 with `"db": "down"` when it isn't.
 
 The local database runs `timescale/timescaledb:latest-pg18` from `compose.yaml` with a named volume, so data survives restarts. The first start also creates a `lift_test` database for integration tests. `npm run db:reset` drops everything, migrates, and seeds again (local databases only). To wipe the volume completely, run `docker compose down -v`.
 
@@ -96,7 +98,7 @@ docs/                 brief, progress, design, and runbooks
 |---|---|---|
 | 0 | Project setup | ttarkhani |
 | 1 | Foundation: design system, page layouts, Tiger Data database and core schema | ttarkhani |
-| 2 | Accounts and teams: Auth0 login, team membership, participant and organizer roles, server-side access checks | |
+| 2 | Accounts and teams: Auth0 login, team membership, participant and organizer roles, server-side access checks | RayanKetata |
 | 3 | Help workflow: post, accept, chat, submit outcome, confirm | |
 | 4 | Scoring: the 20/5/0 pair rule, duplicate-award prevention, auditable points ledger | |
 | 5 | Gemini review: contribution summaries, evidence-backed flags, organizer review queue | |
