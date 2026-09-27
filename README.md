@@ -2,6 +2,8 @@
 
 Lifts rewards hackathon teams for helping other teams get unblocked, with evidence behind every point. Teams post blockers, other teams help, and every confirmed fix earns the helpers points and a contribution receipt.
 
+Built at Hack the Hill III (uOttawa, September 25–27, 2026). Live at **https://lifts-mbjt.onrender.com**. It runs on a free Render instance, so the first visit after a quiet spell can take about a minute to load.
+
 ## How it works
 
 1. **Join your team.** Use the invite code from the organizers and list the skills you can help with.
@@ -9,6 +11,8 @@ Lifts rewards hackathon teams for helping other teams get unblocked, with eviden
 3. **Another team helps.** They accept the blocker and get a private help thread to chat, share code, or meet at your table.
 4. **Submit the outcome.** The helpers explain what they did and add evidence. Your team confirms it's fixed or sends it back.
 5. **Earn points and a receipt.** The helping team earns points once per request, and the leaderboard updates.
+
+## Scoring
 
 Points go to the helping team and are counted per pair of teams across the whole event, in either direction:
 
@@ -18,17 +22,39 @@ Points go to the helping team and are counted per pair of teams across the whole
 | 2nd | 5 |
 | 3rd and later | 0 (still listed on the receipt) |
 
-Helping a new team always starts at 20. For example, A helps B, B, C, then B: 20 + 5 + 20 + 0 = 45 points.
+Helping a new team always starts at 20. For example, A helps B, B, C, then B: 20 + 5 + 20 + 0 = 45 points. Messages, time spent, opening blockers, and reopening them earn nothing.
+
+## Keeping points honest
+
+- **Invite codes.** Organizers create teams and invite codes. Each person joins one team, and membership locks once they join. Only an organizer can move someone, and moving someone needs a reason.
+- **The team that asked confirms.** Helpers can't confirm their own fix.
+- **One award per blocker.** Confirming twice or reopening a blocker never pays again.
+- **An append-only points ledger.** Every points change adds a ledger row. `npm run ledger:verify` checks that the ledger matches the awards and the leaderboard.
+- **Reversals need a reason.** Organizers can reverse or restore an award through the API. The reason is recorded, and the pair is re-scored.
+- **Checked on the server.** Pages and API routes that need a sign-in, a team, or the organizer role check it on the server, never only in the browser.
+- **An activity history.** Every state change writes a row to a TimescaleDB hypertable in the same transaction.
+
+## Pages
+
+| Page | What it's for |
+|---|---|
+| `/` | What Lifts is, and sign-in |
+| `/join` | Join your team with an invite code |
+| `/board` | Open blockers, filterable by tag and by your own team's |
+| `/requests/new` | Post a blocker |
+| `/requests/[id]` | The help thread: messages, the outcome, and confirming the fix |
+| `/leaderboard` | Team rankings. Demo teams are hidden unless you switch them on. Public. |
+| `/teams/[slug]` | A team's contribution receipt. Public. |
+| `/organizer/teams` | Organizers create teams, issue invite codes, and move members |
 
 ## Stack
 
-- **Next.js** (App Router): the web app and its API routes.
-- **TypeScript**: one typed codebase for the app, scripts, and review worker.
-- **Tailwind CSS**: mobile-first styling.
-- **Tiger Cloud (PostgreSQL + TimescaleDB)**: teams, requests, awards, the points ledger, and time-series activity analytics.
-- **Auth0**: login, team membership, and the organizer role.
-- **Gemini**: contribution summaries and evidence-backed flags for organizer review.
-- **Vultr**: hosts the app and the background review worker.
+- **Next.js 16** (App Router) and **TypeScript**: the web app, its API routes, and the scripts.
+- **Tailwind CSS**: mobile-first styling in the Hack the Hill III palette (see [docs/design.md](docs/design.md)).
+- **Tiger Cloud (PostgreSQL 18 + TimescaleDB)**: teams, requests, awards, the points ledger, and the activity history, with continuous aggregates for analytics.
+- **Auth0**: sign-in, team membership, and the organizer role.
+- **Render**: hosts the app and redeploys on every push to `main`.
+- **Vitest and GitHub Actions**: 22 test files, including database integration tests that CI runs against a TimescaleDB container.
 
 ## Getting started
 
@@ -59,6 +85,27 @@ If you use Tiger Cloud's connection pooler, the transaction pool is the database
 
 Integration tests only ever use `TEST_DATABASE_URL`, and they wipe it on every run. Test files run one at a time, because they share that database. It has to be a local database unless `CI` is set. When it's unset, those tests are skipped.
 
+## Deployment
+
+Production runs on Render as a Node web service connected to this repository, with the database on Tiger Cloud.
+
+| Render setting | Value |
+|---|---|
+| Build command | `npm ci --include=dev && npm run db:migrate && npm run build` |
+| Start command | `npm run start` |
+| Health check path | `/api/health` |
+| Node version | Read from `.nvmrc` (24) |
+
+Environment variables:
+
+- `DATABASE_URL`: the Tiger Cloud service URL with its password, ending in `?sslmode=require`.
+- `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET`: from the Auth0 application.
+- `AUTH0_SECRET`: a separate value for production (`openssl rand -hex 32`).
+- `APP_BASE_URL`: the exact public URL, with no trailing slash.
+- `EVENT_NAME` and `EVENT_TIMEZONE`: for example `Hack the Hill` and `America/Toronto`. The time zone must be a valid IANA name, or the help thread and receipt pages fail to load.
+
+The Auth0 application lists `<APP_BASE_URL>/auth/callback` as a callback URL and `<APP_BASE_URL>` as a logout URL and web origin, alongside the localhost ones. Migrations run during every build. Production is never seeded: organizers create teams and invite codes on the **Teams** page.
+
 ## Scripts
 
 | Script | What it does |
@@ -83,13 +130,13 @@ src/app/              pages and thin API route handlers
 src/components/       UI components
 src/lib/              client helpers
 src/domain/           pure logic and types: scoring, request states, schemas
-src/server/           env, errors, auth, database, and review code
+src/server/           env, errors, auth, database, and activity events
 src/server/services/  business rules and state changes
 db/migrations/        numbered SQL migrations
 db/docker-init/       scripts the local database runs on first start
-scripts/              migrate, seed, demo, and check scripts
+scripts/              migrate, seed, reset, and ledger-check scripts
 test/                 Vitest global setup for the test database
-docs/                 brief, progress, design, and runbooks
+docs/                 brief, progress, design, and the Auth0 setup guide
 .github/workflows/    CI
 ```
 
@@ -102,12 +149,12 @@ docs/                 brief, progress, design, and runbooks
 | 2 | Accounts and teams: Auth0 login, team membership, participant and organizer roles, server-side access checks | RayanKetata |
 | 3 | Help workflow: post, accept, chat, submit outcome, confirm | RayanKetata |
 | 4 | Scoring: the 20/5/0 pair rule, duplicate-award prevention, auditable points ledger | Nabil Hersi |
-| 6 | Presentation: live leaderboard, contribution receipts, activity charts, labelled demo scenarios | Whole Team |
-| 7 | Deployment and verification: end-to-end testing, fixes, demo rehearsal | Moustapha Ahmed |
+| 5 | Presentation: the Hack the Hill III theme and the judges' demo | Whole Team |
+| 6 | Deployment and verification: Render and Tiger Cloud in production, end-to-end testing, fixes, demo rehearsal | Moustapha Ahmed |
 
 ## Team
 
-Taha
-Moustapha
-Rayan
-Nabil
+- Taha Tarkhani
+- Moustapha Ahmed
+- Rayan Ketata
+- Nabil Hersi
