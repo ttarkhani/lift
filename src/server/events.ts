@@ -16,6 +16,7 @@ export const ACTIVITY_EVENT_TYPES = [
   "outcome_submitted",
   "outcome_rejected",
   "resolution_confirmed",
+  "resolution_reconfirmed",
   "award_changed",
   "flag_raised",
   "flag_resolved",
