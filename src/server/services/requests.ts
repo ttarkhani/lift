@@ -459,6 +459,8 @@ export type OutcomeView = {
   evidence: string;
   inPerson: boolean;
   submittedBy: string;
+  /** The submitter's team: the helping team at the time. */
+  team: { name: string; slug: string } | null;
   submittedAt: Date;
   state: "pending" | "confirmed" | "reconfirmed" | "rejected";
   decidedBy: string | null;
@@ -495,6 +497,7 @@ export async function getRequestView(tx: Tx, actor: Viewer, requestId: string): 
         select
           o.id, o.helper_summary as summary, o.evidence_kind as "evidenceKind", o.evidence,
           o.in_person as "inPerson", s.display_name as "submittedBy", o.submitted_at as "submittedAt",
+          case when st.id is null then null else json_build_object('name', st.name, 'slug', st.slug) end as team,
           case
             when o.confirmed_at is not null then 'confirmed'
             when o.reconfirmed_at is not null then 'reconfirmed'
@@ -505,6 +508,8 @@ export async function getRequestView(tx: Tx, actor: Viewer, requestId: string): 
           coalesce(o.confirmed_at, o.reconfirmed_at, o.rejected_at) as "decidedAt"
         from outcomes o
         join users s on s.id = o.submitted_by
+        left join team_members sm on sm.user_id = s.id
+        left join teams st on st.id = sm.team_id
         left join users d on d.id = coalesce(o.confirmed_by, o.reconfirmed_by)
         where o.request_id = ${requestId}
         order by o.submitted_at, o.id
