@@ -37,4 +37,20 @@ describe("env", () => {
     expect(() => env.appBaseUrl).toThrow(/APP_BASE_URL/);
     expect(() => env.eventTimezone).toThrow(/EVENT_TIMEZONE/);
   });
+
+  it("reads database settings", async () => {
+    vi.stubEnv("DATABASE_URL", "postgres://lifts:lifts@localhost:5432/lifts");
+    vi.stubEnv("ALLOW_REMOTE_SEED", undefined);
+    const env = await loadEnv();
+    expect(env.databaseUrl).toBe("postgres://lifts:lifts@localhost:5432/lifts");
+    expect(env.allowRemoteSeed).toBe(false);
+  });
+
+  it("parses ALLOW_REMOTE_SEED and rejects non-postgres URLs", async () => {
+    vi.stubEnv("ALLOW_REMOTE_SEED", "1");
+    vi.stubEnv("TEST_DATABASE_URL", "mysql://localhost/lift_test");
+    const env = await loadEnv();
+    expect(env.allowRemoteSeed).toBe(true);
+    expect(() => env.testDatabaseUrl).toThrow(/TEST_DATABASE_URL/);
+  });
 });
