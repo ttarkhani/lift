@@ -37,7 +37,7 @@ Scale (rem, 16px root): `xs` 0.8125, `sm` 0.9375, `base` 1.0625 (17px body, one 
 ## Space, shape, and layout
 
 - One column, max width 40rem, 16px gutters on phones. The organizer review queue widens to 72rem on laptops, with evidence and the decision side by side.
-- **Rows, not cards.** Lists are white rows separated by hairline rules inside a single bordered panel. No shadows anywhere except the receipt, which gets one hard offset shadow so it looks like paper laid on the board.
+- **Rows, not cards.** Lists are white rows separated by hairline rules inside a single bordered panel. No shadows anywhere except the receipt, which gets one hard shadow offset straight down so it looks like paper laid on the board. (A diagonal offset repeats the torn edge half a tooth sideways, which reads as a row of diamonds.)
 - Radii: `sm` 4px for inputs, buttons, and tags; `md` 8px for panels. The receipt has square corners and zigzag top and bottom edges.
 - Tap targets are at least 44px tall. Primary buttons are full-width on phones.
 - The header is two short rows on phones (wordmark and sign-in, then Board, Leaderboard, My team) and one row from 640px.
