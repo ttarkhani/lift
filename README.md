@@ -102,9 +102,8 @@ docs/                 brief, progress, design, and runbooks
 | 2 | Accounts and teams: Auth0 login, team membership, participant and organizer roles, server-side access checks | RayanKetata |
 | 3 | Help workflow: post, accept, chat, submit outcome, confirm | RayanKetata |
 | 4 | Scoring: the 20/5/0 pair rule, duplicate-award prevention, auditable points ledger | Nabil Hersi |
-| 5 | Gemini review: contribution summaries, evidence-backed flags, organizer review queue | |
-| 6 | Presentation: live leaderboard, contribution receipts, activity charts, labelled demo scenarios | |
-| 7 | Deployment and verification: Vultr, end-to-end testing, fixes, demo rehearsal | |
+| 6 | Presentation: live leaderboard, contribution receipts, activity charts, labelled demo scenarios | Whole Team |
+| 7 | Deployment and verification: end-to-end testing, fixes, demo rehearsal | Moustapha Ahmed |
 
 ## Team
 
