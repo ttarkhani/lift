@@ -57,7 +57,7 @@ The local database runs `timescale/timescaledb:latest-pg18` from `compose.yaml` 
 
 If you use Tiger Cloud's connection pooler, the transaction pool is the database named `tsdb_transaction`. The app detects it and turns off prepared statements, which that pool doesn't support.
 
-Integration tests only ever use `TEST_DATABASE_URL`, and they wipe it on every run. It has to be a local database unless `CI` is set. When it's unset, those tests are skipped.
+Integration tests only ever use `TEST_DATABASE_URL`, and they wipe it on every run. Test files run one at a time, because they share that database. It has to be a local database unless `CI` is set. When it's unset, those tests are skipped.
 
 ## Scripts
 
@@ -99,7 +99,7 @@ docs/                 brief, progress, design, and runbooks
 | 0 | Project setup | ttarkhani |
 | 1 | Foundation: design system, page layouts, Tiger Data database and core schema | ttarkhani |
 | 2 | Accounts and teams: Auth0 login, team membership, participant and organizer roles, server-side access checks | RayanKetata |
-| 3 | Help workflow: post, accept, chat, submit outcome, confirm | |
+| 3 | Help workflow: post, accept, chat, submit outcome, confirm | RayanKetata |
 | 4 | Scoring: the 20/5/0 pair rule, duplicate-award prevention, auditable points ledger | |
 | 5 | Gemini review: contribution summaries, evidence-backed flags, organizer review queue | |
 | 6 | Presentation: live leaderboard, contribution receipts, activity charts, labelled demo scenarios | |
