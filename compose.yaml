@@ -1,0 +1,22 @@
+# Local database for development. Tiger Cloud runs Postgres 18, so this does too.
+services:
+  db:
+    image: timescale/timescaledb:latest-pg18
+    environment:
+      POSTGRES_USER: lifts
+      POSTGRES_PASSWORD: lifts
+      POSTGRES_DB: lifts
+      TIMESCALEDB_TELEMETRY: "off"
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql
+      - ./db/docker-init/010_create_test_db.sql:/docker-entrypoint-initdb.d/010_create_test_db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lifts -d lifts"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  db-data:
