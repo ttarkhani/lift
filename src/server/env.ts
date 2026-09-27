@@ -12,6 +12,12 @@ const schema = z.object({
     .enum(["0", "1"])
     .default("0")
     .transform((value) => value === "1"),
+  AUTH0_DOMAIN: z
+    .string()
+    .regex(/^[a-z0-9.-]+$/i, "Must be a bare domain like dev-abc123.us.auth0.com, without https://"),
+  AUTH0_CLIENT_ID: z.string().min(1),
+  AUTH0_CLIENT_SECRET: z.string().min(1),
+  AUTH0_SECRET: z.string().regex(/^[0-9a-f]{64}$/i, "Must be 64 hex characters (openssl rand -hex 32)"),
 });
 
 type Env = z.infer<typeof schema>;
@@ -72,5 +78,17 @@ export const env = {
   },
   get allowRemoteSeed() {
     return read("ALLOW_REMOTE_SEED");
+  },
+  get auth0Domain() {
+    return read("AUTH0_DOMAIN");
+  },
+  get auth0ClientId() {
+    return read("AUTH0_CLIENT_ID");
+  },
+  get auth0ClientSecret() {
+    return read("AUTH0_CLIENT_SECRET");
+  },
+  get auth0Secret() {
+    return read("AUTH0_SECRET");
   },
 };

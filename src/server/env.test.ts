@@ -53,4 +53,22 @@ describe("env", () => {
     expect(env.allowRemoteSeed).toBe(true);
     expect(() => env.testDatabaseUrl).toThrow(/TEST_DATABASE_URL/);
   });
+
+  it("reads Auth0 settings and rejects a domain with a scheme or a short secret", async () => {
+    vi.stubEnv("AUTH0_DOMAIN", "dev-lifts.us.auth0.com");
+    vi.stubEnv("AUTH0_CLIENT_ID", "client-id");
+    vi.stubEnv("AUTH0_CLIENT_SECRET", "client-secret");
+    vi.stubEnv("AUTH0_SECRET", "ab".repeat(32));
+    let env = await loadEnv();
+    expect(env.auth0Domain).toBe("dev-lifts.us.auth0.com");
+    expect(env.auth0ClientId).toBe("client-id");
+    expect(env.auth0ClientSecret).toBe("client-secret");
+    expect(env.auth0Secret).toBe("ab".repeat(32));
+
+    vi.stubEnv("AUTH0_DOMAIN", "https://dev-lifts.us.auth0.com");
+    vi.stubEnv("AUTH0_SECRET", "too-short");
+    env = await loadEnv();
+    expect(() => env.auth0Domain).toThrow(/AUTH0_DOMAIN/);
+    expect(() => env.auth0Secret).toThrow(/AUTH0_SECRET/);
+  });
 });
