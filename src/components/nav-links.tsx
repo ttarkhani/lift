@@ -7,7 +7,7 @@ import { cx } from "@/lib/cx";
 export function NavLinks({ links }: { links: { label: string; href: string }[] }) {
   const pathname = usePathname();
   return (
-    <ul className="flex gap-1">
+    <ul className="flex flex-wrap gap-x-1">
       {links.map(({ label, href }) => {
         const current = pathname === href || pathname.startsWith(`${href}/`);
         return (
