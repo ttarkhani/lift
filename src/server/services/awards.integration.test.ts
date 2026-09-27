@@ -57,8 +57,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("award services", () => {
     `;
   }
 
-  async function expectLedgerBalanced(tx: Tx | Sql) {
-    const check = await verifyLedger(tx as Tx);
+  async function expectLedgerBalanced(tx: Tx) {
+    const check = await verifyLedger(tx);
     expect(check.problems).toEqual([]);
   }
 
@@ -267,7 +267,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("award services", () => {
         [1, 20],
         [2, 5],
       ]);
-      await expectLedgerBalanced(sql);
+      await sql.begin((tx) => expectLedgerBalanced(tx));
     } finally {
       await removeTeams(sql, teams);
     }
