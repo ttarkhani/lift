@@ -36,3 +36,33 @@ export async function postJson<T>(url: string, body: unknown): Promise<ApiResult
     fieldErrors,
   };
 }
+
+export async function getJson<T>(url: string): Promise<ApiResult<T>> {
+  try {
+    const response = await fetch(url, { headers: { accept: "application/json" }, cache: "no-store" });
+    const json = await response.json().catch(() => null);
+    if (response.ok) return { ok: true, data: json as T };
+    return {
+      ok: false,
+      status: response.status,
+      message: typeof json?.error?.message === "string" ? json.error.message : "Something went wrong.",
+      fieldErrors: {},
+    };
+  } catch {
+    return { ok: false, status: 0, message: "Couldn't reach Lifts.", fieldErrors: {} };
+  }
+}
+
+/** A server type as it arrives over JSON: dates become ISO strings. */
+export type Serialized<T> = T extends Date
+  ? string
+  : T extends (infer U)[]
+    ? Serialized<U>[]
+    : T extends object
+      ? { [K in keyof T]: Serialized<T[K]> }
+      : T;
+
+/** Converts server data to its JSON shape, so pages hand client components what polling returns. */
+export function serialize<T>(value: T): Serialized<T> {
+  return JSON.parse(JSON.stringify(value)) as Serialized<T>;
+}
