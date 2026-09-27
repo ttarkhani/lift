@@ -14,5 +14,8 @@ export default defineConfig({
   test: {
     environment: "node",
     globalSetup: ["./test/global-setup.ts"],
+    // Integration test files share TEST_DATABASE_URL, and some commit data briefly (the
+    // accept race needs two real transactions), so files run one at a time.
+    fileParallelism: false,
   },
 });
