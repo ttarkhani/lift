@@ -21,6 +21,12 @@ export function createSql(url: string, options: postgres.Options<Record<string, 
   return postgres(url, { ...connectionOptions(url), ...options });
 }
 
+/** True when `error` is a unique-constraint violation, optionally on one named constraint. */
+export function isUniqueViolation(error: unknown, constraint?: string): boolean {
+  if (!(error instanceof postgres.PostgresError) || error.code !== "23505") return false;
+  return constraint === undefined || error.constraint_name === constraint;
+}
+
 /** True only for loopback hosts, so a production container named "db" never counts as local. */
 export function isLocalDatabaseUrl(url: string): boolean {
   const host = new URL(url).hostname;
