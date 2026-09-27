@@ -5,7 +5,8 @@ import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { getPageViewer } from "@/server/auth/pages";
-import { getLeaderboard } from "@/lib/mock";
+import { withTx } from "@/server/db/client";
+import { getLeaderboard } from "@/server/services/awards";
 
 export const metadata: Metadata = { title: "Leaderboard" };
 
@@ -13,7 +14,7 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
   await getPageViewer();
   const { demo } = await props.searchParams;
   const includeDemo = demo === "1";
-  const rows = getLeaderboard({ includeDemo });
+  const rows = await withTx((tx) => getLeaderboard(tx, { includeDemo }));
 
   return (
     <Page>
@@ -39,11 +40,11 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
         </EmptyState>
       ) : (
         <ol className="divide-y-2 divide-ground rounded-md border-2 border-rule bg-paper">
-          {rows.map((row, i) => (
+          {rows.map((row) => (
             <li key={row.team.slug} className="flex items-center gap-4 px-4 py-3">
               <span className="w-8 shrink-0 font-mono text-lg font-bold text-ink-soft tabular-nums">
                 <span className="sr-only">Rank </span>
-                {i + 1}
+                {row.rank}
               </span>
               <div className="min-w-0 flex-1">
                 <p className="flex flex-wrap items-center gap-2">
