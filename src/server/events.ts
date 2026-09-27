@@ -2,7 +2,9 @@ import type postgres from "postgres";
 import type { Tx } from "@/server/db/client";
 
 export const ACTIVITY_EVENT_TYPES = [
+  "user_created",
   "team_created",
+  "invite_issued",
   "member_joined",
   "member_moved",
   "request_posted",

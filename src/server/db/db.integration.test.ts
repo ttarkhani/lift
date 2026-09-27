@@ -22,9 +22,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("database", () => {
     return row.n;
   }
 
-  it("records both migrations", async () => {
+  it("records every migration", async () => {
     const rows = await sql<{ filename: string }[]>`select filename from schema_migrations order by filename`;
-    expect(rows.map((r) => r.filename)).toEqual(["0001_core.sql", "0002_activity.sql"]);
+    expect(rows.map((r) => r.filename)).toEqual(["0001_core.sql", "0002_activity.sql", "0003_account_events.sql"]);
   });
 
   it("seeds teams, members, invites, and open requests", async () => {
