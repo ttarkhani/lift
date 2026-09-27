@@ -7,6 +7,23 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    services:
+      db:
+        image: timescale/timescaledb:latest-pg18
+        env:
+          POSTGRES_USER: lifts
+          POSTGRES_PASSWORD: lifts
+          POSTGRES_DB: lift_test
+          TIMESCALEDB_TELEMETRY: "off"
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U lifts -d lift_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      TEST_DATABASE_URL: postgres://lifts:lifts@localhost:5432/lift_test
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
