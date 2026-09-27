@@ -39,7 +39,7 @@ npm install
 cp .env.example .env.local
 npm run db:up        # starts TimescaleDB on localhost:5432 and waits until it's healthy
 npm run db:migrate   # applies db/migrations/*.sql
-npm run db:seed      # adds teams, members, and open blockers, and prints each team's invite code
+npm run db:seed      # adds teams, members, open blockers, and Team Maple's four confirmed fixes (65 points), and prints each team's invite code
 npm run dev
 ```
 
@@ -74,6 +74,7 @@ Integration tests only ever use `TEST_DATABASE_URL`, and they wipe it on every r
 | `npm run db:migrate` | Applies pending SQL migrations to `DATABASE_URL`. |
 | `npm run db:seed` | Seeds an empty database and prints invite codes. Refuses non-local databases unless `ALLOW_REMOTE_SEED=1`. |
 | `npm run db:reset` | Drops the schema, migrates, and seeds. Local databases only. |
+| `npm run ledger:verify` | Checks that every award's ledger rows add up to its points and every team's ledger total matches the leaderboard. Exits non-zero on any mismatch. Read-only. |
 
 ## Project structure
 
@@ -100,7 +101,7 @@ docs/                 brief, progress, design, and runbooks
 | 1 | Foundation: design system, page layouts, Tiger Data database and core schema | ttarkhani |
 | 2 | Accounts and teams: Auth0 login, team membership, participant and organizer roles, server-side access checks | RayanKetata |
 | 3 | Help workflow: post, accept, chat, submit outcome, confirm | RayanKetata |
-| 4 | Scoring: the 20/5/0 pair rule, duplicate-award prevention, auditable points ledger | |
+| 4 | Scoring: the 20/5/0 pair rule, duplicate-award prevention, auditable points ledger | Nabil Hersi |
 | 5 | Gemini review: contribution summaries, evidence-backed flags, organizer review queue | |
 | 6 | Presentation: live leaderboard, contribution receipts, activity charts, labelled demo scenarios | |
 | 7 | Deployment and verification: Vultr, end-to-end testing, fixes, demo rehearsal | |
