@@ -1,23 +1,28 @@
 import Link from "next/link";
 import { cx } from "@/lib/cx";
-import { formatTime, ordinal } from "@/lib/format";
+import { formatTime } from "@/lib/format";
 import { CheckIcon } from "./icons";
 import { StatusBadge } from "./status-badge";
 
 export type ReceiptLine = {
-  requestId: number;
+  awardId: string;
+  requestId: string;
+  requestTitle: string;
   helpedTeam: string;
+  /** The helping team's summary of the fix, as the requesting team confirmed it. */
   summary: string;
   points: number;
-  pairIndex: number;
-  confirmedBy: string;
+  /** How the points were worked out, such as "2nd confirmed resolution between …: 5 points." */
+  explanation: string;
+  confirmedBy: string | null;
   confirmedAt: string;
   state: "counted" | "under_review" | "reversed";
+  links: { request: string; outcome: string; confirmation: string; evidence: string };
 };
 
 type ReceiptProps = {
   teamName: string;
-  table: string;
+  table: string | null;
   lines: ReceiptLine[];
   timeZone: string;
 };
@@ -53,17 +58,17 @@ export function Receipt({ teamName, table, lines, timeZone }: ReceiptProps) {
           <h2 id={headingId} className="mt-1 text-xl font-bold">
             Team {teamName}
           </h2>
-          <p className="text-xs text-ink-soft">{table}</p>
+          {table && <p className="text-xs text-ink-soft">{table}</p>}
         </header>
 
         <div className="my-5 border-t-2 border-dashed border-rule" />
 
         <ol className="flex flex-col gap-6">
           {rows.map((line) => (
-            <li key={line.requestId}>
+            <li key={line.awardId}>
               <div className="flex items-baseline justify-between gap-3 text-xs text-ink-soft">
                 <Link
-                  href={`/requests/${line.requestId}`}
+                  href={line.links.request}
                   className="text-stamp underline underline-offset-4 hover:text-ink"
                 >
                   Request #{line.requestId}
@@ -72,24 +77,31 @@ export function Receipt({ teamName, table, lines, timeZone }: ReceiptProps) {
               </div>
 
               <div className="mt-1 flex items-start justify-between gap-4">
-                <p className="text-sm font-bold">
-                  Helped Team {line.helpedTeam} {line.summary}
+                <p className="min-w-0 text-sm font-bold break-words">
+                  Helped Team {line.helpedTeam} with “{line.requestTitle}”
                 </p>
                 <p
                   className={cx(
                     "shrink-0 text-right text-lg font-bold tabular-nums",
-                    line.state === "reversed" && "text-alert line-through",
+                    line.state === "reversed" && "text-alert",
                   )}
                 >
-                  <span className="sr-only">
-                    {line.state === "reversed" ? "Reversed, was " : ""}
-                  </span>
                   +{line.points}
                 </p>
               </div>
 
-              <p className="mt-0.5 text-xs text-ink-soft">
-                {ordinal(line.pairIndex)} confirmed fix between these two teams
+              <p className="mt-1 text-xs break-words">{line.summary}</p>
+              <p className="mt-1 text-xs text-ink-soft">{line.explanation}</p>
+              <p className="mt-1 flex flex-wrap gap-x-3 text-xs">
+                <Link href={line.links.outcome} className="text-stamp underline underline-offset-4 hover:text-ink">
+                  Outcome
+                </Link>
+                <Link href={line.links.evidence} className="text-stamp underline underline-offset-4 hover:text-ink">
+                  Evidence
+                </Link>
+                <Link href={line.links.confirmation} className="text-stamp underline underline-offset-4 hover:text-ink">
+                  Confirmation
+                </Link>
               </p>
 
               <div className="mt-2 flex flex-wrap items-end justify-between gap-2">
@@ -98,7 +110,7 @@ export function Receipt({ teamName, table, lines, timeZone }: ReceiptProps) {
                     <CheckIcon className="shrink-0" />
                     Confirmed by Team {line.helpedTeam}
                   </span>
-                  <span className="block">{line.confirmedBy}</span>
+                  {line.confirmedBy && <span className="block">{line.confirmedBy}</span>}
                 </span>
                 <span className="text-xs text-ink-soft tabular-nums">
                   Running total {line.running}

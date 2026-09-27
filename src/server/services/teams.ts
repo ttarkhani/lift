@@ -185,3 +185,24 @@ export async function listTeamsForOrganizer(tx: Tx, actor: Viewer): Promise<Orga
   `;
   return rows.map((row) => ({ ...toTeam(row), tableLocation: row.table_location, invites: row.invites, members: row.members }));
 }
+
+export type TeamProfile = ViewerTeam & { tableLocation: string | null; members: string[]; skills: string[] };
+
+/** Public. A team's name, table, members, and the skills they listed, for its receipt page. */
+export async function getTeamProfile(tx: Tx, slug: string): Promise<TeamProfile> {
+  const [row] = await tx<(TeamRow & { table_location: string | null; members: string[]; skills: string[] })[]>`
+    select
+      t.id, t.slug, t.name, t.is_demo, t.table_location,
+      coalesce((
+        select array_agg(u.display_name order by m.joined_at)
+        from team_members m join users u on u.id = m.user_id where m.team_id = t.id
+      ), '{}') as members,
+      coalesce((
+        select array_agg(distinct s order by s) from team_members m, unnest(m.skills) s where m.team_id = t.id
+      ), '{}') as skills
+    from teams t
+    where t.slug = ${slug}
+  `;
+  if (!row) throw new NotFoundError("That team doesn't exist.");
+  return { ...toTeam(row), tableLocation: row.table_location, members: row.members, skills: row.skills };
+}
