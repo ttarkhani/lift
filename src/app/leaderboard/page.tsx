@@ -4,11 +4,13 @@ import { Page } from "@/components/app-shell";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
+import { getPageViewer } from "@/server/auth/pages";
 import { getLeaderboard } from "@/lib/mock";
 
 export const metadata: Metadata = { title: "Leaderboard" };
 
 export default async function LeaderboardPage(props: PageProps<"/leaderboard">) {
+  await getPageViewer();
   const { demo } = await props.searchParams;
   const includeDemo = demo === "1";
   const rows = getLeaderboard({ includeDemo });

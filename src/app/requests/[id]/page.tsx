@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { TagList } from "@/components/tag";
 import { Checkbox, SelectField, TextArea } from "@/components/text-field";
 import { EVIDENCE_KIND_LABELS, EVIDENCE_KINDS } from "@/domain/types";
+import { requireTeamPage } from "@/server/auth/pages";
 import { formatTime } from "@/lib/format";
 import {
   getRequest,
@@ -34,6 +35,8 @@ export async function generateMetadata(props: PageProps<"/requests/[id]">): Prom
 }
 
 export default async function RequestPage(props: PageProps<"/requests/[id]">) {
+  // Step 3 adds assertCanViewThread once requests come from the database.
+  await requireTeamPage(`/requests/${(await props.params).id}`);
   const request = await load(props.params);
   const requester = getTeam(request.requestingTeam)!;
   const helper = request.helpingTeam ? getTeam(request.helpingTeam)! : null;

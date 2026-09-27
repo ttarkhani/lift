@@ -3,15 +3,18 @@ import Link from "next/link";
 import { Page } from "@/components/app-shell";
 import { Button } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
+import { NoAccess } from "@/components/no-access";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { TextArea } from "@/components/text-field";
+import { requireOrganizerPage } from "@/server/auth/pages";
 import { formatTime } from "@/lib/format";
 import { getReviewQueue, getTeam, MOCK_TIMEZONE, type ReviewCard } from "@/lib/mock";
 
 export const metadata: Metadata = { title: "Review queue" };
 
-export default function ReviewPage() {
+export default async function ReviewPage() {
+  if (!(await requireOrganizerPage("/organizer/review"))) return <NoAccess title="Review queue" />;
   const cards = getReviewQueue();
 
   return (

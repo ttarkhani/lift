@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/page-header";
 import { Receipt } from "@/components/receipt";
 import { StatusBadge } from "@/components/status-badge";
 import { TagList } from "@/components/tag";
+import { getPageViewer } from "@/server/auth/pages";
 import { formatTime } from "@/lib/format";
 import { getHelpReceived, getReceipt, getTeam, MOCK_TIMEZONE } from "@/lib/mock";
 
@@ -23,6 +24,7 @@ export async function generateMetadata(props: PageProps<"/teams/[slug]">): Promi
 }
 
 export default async function TeamPage(props: PageProps<"/teams/[slug]">) {
+  await getPageViewer();
   const team = await load(props.params);
   const lines = getReceipt(team.slug).map((award) => ({
     ...award,

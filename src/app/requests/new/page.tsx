@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { Page } from "@/components/app-shell";
 import { Button } from "@/components/button";
 import { PageHeader } from "@/components/page-header";
+import { requireTeamPage } from "@/server/auth/pages";
 import { TextArea, TextField } from "@/components/text-field";
 
 export const metadata: Metadata = { title: "Post a blocker" };
 
-export default function NewRequestPage() {
+export default async function NewRequestPage() {
+  await requireTeamPage("/requests/new");
   return (
     <Page>
       <PageHeader

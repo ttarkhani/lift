@@ -6,12 +6,14 @@ import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { TagList } from "@/components/tag";
+import { getPageViewer } from "@/server/auth/pages";
 import { timeAgo } from "@/lib/format";
 import { CURRENT_TEAM_SLUG, getOpenBlockers, getTeam, MOCK_NOW } from "@/lib/mock";
 
 export const metadata: Metadata = { title: "Board" };
 
-export default function BoardPage() {
+export default async function BoardPage() {
+  await getPageViewer();
   const blockers = getOpenBlockers();
 
   return (

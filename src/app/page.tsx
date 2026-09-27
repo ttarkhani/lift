@@ -1,5 +1,6 @@
 import { Page } from "@/components/app-shell";
-import { Button } from "@/components/button";
+import { Button, buttonClasses } from "@/components/button";
+import { getPageViewer, loginHref } from "@/server/auth/pages";
 
 const steps = [
   { title: "Join your team", body: "Use the invite code from the organizers and list what you can help with." },
@@ -9,7 +10,9 @@ const steps = [
   { title: "Helpers earn points", body: "The helping team gets points and a line on its contribution receipt." },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const viewer = await getPageViewer();
+
   return (
     <Page>
       <section className="py-4">
@@ -21,12 +24,21 @@ export default function Home() {
           with evidence behind every point.
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <Button href="/auth/login" block>
-            Log in to join your team
-          </Button>
-          <Button href="/board" variant="secondary" block>
-            See the board
-          </Button>
+          {viewer ? (
+            <Button href="/board" block>
+              Go to the board
+            </Button>
+          ) : (
+            <>
+              {/* A plain anchor: /auth/login is served by the proxy. */}
+              <a href={loginHref("/join")} className={buttonClasses({ block: true })}>
+                Log in to join your team
+              </a>
+              <Button href="/board" variant="secondary" block>
+                See the board
+              </Button>
+            </>
+          )}
         </div>
       </section>
 
