@@ -5,13 +5,16 @@ import { useState } from "react";
 import { Button } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
 import { CheckIcon } from "@/components/icons";
+import { StatusBadge } from "@/components/status-badge";
 import { Checkbox, SelectField, TextArea } from "@/components/text-field";
 import { EVIDENCE_KIND_LABELS, EVIDENCE_KINDS, type EvidenceKind } from "@/domain/types";
 import type { Serialized } from "@/lib/api";
 import { formatTime } from "@/lib/format";
+import type { AwardView } from "@/server/services/awards";
 import type { OutcomeView, TeamSummary, ThreadMessage } from "@/server/services/requests";
 
 export type Message = Serialized<ThreadMessage>;
+export type Award = Serialized<AwardView>;
 export type Outcome = Serialized<OutcomeView>;
 export type Team = Serialized<TeamSummary>;
 
@@ -197,12 +200,15 @@ export function OutcomeCard({
   requester,
   timeZone,
   decision,
+  award,
 }: {
   outcome: Outcome;
   requester: Team;
   timeZone: string;
   /** The confirm and send-back buttons, when the viewer's team decides. */
   decision: React.ReactNode;
+  /** The request's award, shown on the confirmed outcome it came from. */
+  award: Award | null;
 }) {
   const isUrl = outcome.evidenceKind === "link" || outcome.evidenceKind === "screenshot_link";
   return (
@@ -242,7 +248,10 @@ export function OutcomeCard({
         </div>
       )}
       {(outcome.state === "confirmed" || outcome.state === "reconfirmed") && outcome.decidedAt && (
-        <p className="mt-5 flex flex-wrap items-center gap-2 border-t-2 border-ground pt-4 text-sm">
+        <p
+          id={`confirmation-${outcome.id}`}
+          className="mt-5 flex flex-wrap items-center gap-2 border-t-2 border-ground pt-4 text-sm"
+        >
           <span className="inline-flex items-center gap-1.5 font-bold text-stamp">
             <CheckIcon />
             {outcome.state === "confirmed" ? "Confirmed" : "Confirmed again"} by Team {requester.name}
@@ -259,6 +268,15 @@ export function OutcomeCard({
             </Link>
           )}
         </p>
+      )}
+      {outcome.state === "confirmed" && award && (
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+          <span className="font-mono font-bold tabular-nums">
+            {award.points} {award.points === 1 ? "point" : "points"} to Team {award.helpingTeam.name}
+          </span>
+          {award.status === "reversed" && <StatusBadge status="reversed" />}
+          <span className="text-ink-soft">{award.explanation}</span>
+        </div>
       )}
     </section>
   );

@@ -229,6 +229,7 @@ export function RequestThread({ initialView, initialMessages, timeZone, done }: 
             outcome={outcome}
             requester={requester}
             timeZone={timeZone}
+            award={view.award}
             decision={
               outcome.state === "pending" && can("confirm") ? (
                 <>
