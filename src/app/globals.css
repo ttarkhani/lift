@@ -1,1 +1,81 @@
 @import "tailwindcss";
+
+/* Design tokens. See docs/design.md. Tailwind's default palette and shadows
+   are cleared so components can only use these. */
+@theme {
+  --color-*: initial;
+  --color-ink: #15181e;
+  --color-ground: #e9ecef;
+  --color-paper: #ffffff;
+  --color-stamp: #4a33c8;
+  --color-marker: #ffd43b;
+  --color-alert: #b4231a;
+  --color-ink-soft: color-mix(in oklab, var(--color-ink) 72%, var(--color-paper));
+  --color-rule: color-mix(in oklab, var(--color-ink) 22%, var(--color-paper));
+  --color-stamp-wash: color-mix(in oklab, var(--color-stamp) 9%, var(--color-paper));
+  --color-alert-wash: color-mix(in oklab, var(--color-alert) 8%, var(--color-paper));
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.25rem;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.375rem;
+  --text-base: 1.0625rem;
+  --text-base--line-height: 1.625rem;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.5rem;
+  --text-xl--line-height: 2rem;
+  --text-2xl: 2rem;
+  --text-2xl--line-height: 2.5rem;
+  --text-display: 2.75rem;
+  --text-display--line-height: 1;
+
+  --radius-*: initial;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-full: 9999px;
+
+  --spacing-tap: 2.75rem;
+  --container-page: 40rem;
+  --container-wide: 72rem;
+
+  --shadow-*: initial;
+  --drop-shadow-*: initial;
+  --drop-shadow-paper: 0 6px 0 color-mix(in oklab, var(--color-ink) 18%, transparent);
+}
+
+@theme inline {
+  --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-atkinson-mono), ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-ground font-sans text-base text-ink antialiased;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-stamp);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--color-stamp-wash);
+  }
+}
+
+/* Zigzag top and bottom edges for the contribution receipt. */
+@utility torn-edges {
+  --tooth: 14px;
+  mask:
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg)
+      top / var(--tooth) 51% repeat-x,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg)
+      bottom / var(--tooth) 51% repeat-x;
+}
