@@ -108,7 +108,7 @@ docs/                 brief, progress, design, and runbooks
 
 ## Team
 
-- _Name_
-- _Name_
-- _Name_
-- _Name_
+Taha
+Moustapha
+Rayan
+Nabil
