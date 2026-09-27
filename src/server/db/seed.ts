@@ -1,4 +1,4 @@
-import { randomInt } from "node:crypto";
+import { inviteCode } from "@/domain/teams";
 import type { Sql, Tx } from "@/server/db/client";
 import { emitActivity } from "@/server/events";
 
@@ -79,14 +79,6 @@ export const SEED_REQUESTS = [
   },
 ];
 
-// No 0/O or 1/I/L, so codes survive being read aloud or copied off a screen.
-const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-
-export function inviteCode(slug: string): string {
-  let suffix = "";
-  for (let i = 0; i < 4; i++) suffix += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)];
-  return `${slug.toUpperCase()}-${suffix}`;
-}
 
 export type SeedResult = { invites: { team: string; code: string }[] };
 
