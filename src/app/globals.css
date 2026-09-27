@@ -4,13 +4,20 @@
    are cleared so components can only use these. */
 @theme {
   --color-*: initial;
-  --color-ink: #15181e;
-  --color-ground: #e9ecef;
-  --color-paper: #ffffff;
-  --color-stamp: #4a33c8;
-  --color-marker: #ffd43b;
-  --color-alert: #b4231a;
-  --color-ink-soft: color-mix(in oklab, var(--color-ink) 72%, var(--color-paper));
+  /* Hack the Hill III palette, taken from hackthehill.com and its tracker. */
+  --color-ink: #650014;
+  --color-ground: #fff3b6;
+  --color-paper: #fffbe6;
+  --color-stamp: #84010b;
+  --color-marker: #f6bf70;
+  --color-brick: #c11f25;
+  --color-alert: var(--color-brick);
+  --color-sand: #f5c18c;
+  --color-sunset-1: #c7734f;
+  --color-sunset-2: #ea8a60;
+  --color-sunset-3: #ee9e6f;
+  --color-sunset-4: #f6bc83;
+  --color-ink-soft: color-mix(in oklab, var(--color-ink) 82%, var(--color-paper));
   --color-rule: color-mix(in oklab, var(--color-ink) 22%, var(--color-paper));
   --color-stamp-wash: color-mix(in oklab, var(--color-stamp) 9%, var(--color-paper));
   --color-alert-wash: color-mix(in oklab, var(--color-alert) 8%, var(--color-paper));
@@ -31,10 +38,12 @@
   --text-2xl--line-height: 2.5rem;
   --text-display: 2.75rem;
   --text-display--line-height: 1;
+  --text-hero: clamp(4.5rem, 24vw, 8rem);
+  --text-hero--line-height: 1;
 
   --radius-*: initial;
-  --radius-sm: 4px;
-  --radius-md: 8px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
   --radius-full: 9999px;
 
   --spacing-tap: 2.75rem;
@@ -49,6 +58,7 @@
 @theme inline {
   --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-atkinson-mono), ui-monospace, monospace;
+  --font-display: var(--font-rubik), var(--font-atkinson), ui-sans-serif, sans-serif;
 }
 
 @layer base {
@@ -58,6 +68,12 @@
 
   body {
     @apply bg-ground font-sans text-base text-ink antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
   }
 
   :focus-visible {
@@ -78,4 +94,23 @@
       top / var(--tooth) 51% repeat-x,
     conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg)
       bottom / var(--tooth) 51% repeat-x;
+}
+
+/* The tracker's hero gradient, terracotta at the top to peach at the bottom. */
+@utility bg-sunset {
+  background-image: linear-gradient(
+    var(--color-sunset-1),
+    var(--color-sunset-2),
+    var(--color-sunset-3),
+    var(--color-sunset-4)
+  );
+}
+
+/* Display lettering: brick fill, cream outline, and a hard maroon shadow so the
+   letter edges hold up on the gradient. */
+@utility display-outline {
+  color: var(--color-brick);
+  -webkit-text-stroke: 0.1em var(--color-ground);
+  paint-order: stroke fill;
+  text-shadow: 0 0.07em 0 var(--color-stamp);
 }

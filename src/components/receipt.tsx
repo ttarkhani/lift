@@ -55,7 +55,7 @@ export function Receipt({ teamName, table, lines, timeZone }: ReceiptProps) {
       >
         <header className="text-center">
           <p className="text-xs text-ink-soft">Lifts contribution receipt</p>
-          <h2 id={headingId} className="mt-1 text-xl font-bold">
+          <h2 id={headingId} className="mt-1 font-mono text-xl font-bold">
             Team {teamName}
           </h2>
           {table && <p className="text-xs text-ink-soft">{table}</p>}
