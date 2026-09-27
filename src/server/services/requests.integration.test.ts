@@ -331,13 +331,13 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("request services", () => {
       await acceptRequest(tx, maple, orbitAsk.id);
       const auroraOpen = await postRequest(tx, aurora, { ...blocker, tags: ["design"] });
 
-      const board = await listRequests(tx, maple, { mine: false });
+      const board = await listRequests(tx, maple, { mine: false, tag: undefined });
       const openIds = board.requests.map((r) => r.id);
       expect(openIds).toContain(mapleOpen.id);
       expect(openIds).toContain(auroraOpen.id);
       expect(openIds).not.toContain(orbitAsk.id);
 
-      const mine = await listRequests(tx, maple, { mine: true });
+      const mine = await listRequests(tx, maple, { mine: true, tag: undefined });
       expect(mine.requests.map((r) => [r.id, r.party])).toEqual([
         [orbitAsk.id, "helper"],
         [mapleOpen.id, "requester"],
