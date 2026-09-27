@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createSql, type Sql } from "@/server/db/client";
-import { seed, SEED_REQUESTS, SEED_TEAMS, type SeedResult } from "@/server/db/seed";
+import { seed, SEED_REQUESTS, SEED_RESOLUTIONS, SEED_TEAMS, type SeedResult } from "@/server/db/seed";
 import { emitActivity } from "@/server/events";
+import { getLeaderboard, getReceipt, verifyLedger } from "@/server/services/awards";
 
 // Runs against TEST_DATABASE_URL, which test/global-setup.ts resets and migrates.
 describe.skipIf(!process.env.TEST_DATABASE_URL)("database", () => {
@@ -29,6 +30,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("database", () => {
       "0002_activity.sql",
       "0003_account_events.sql",
       "0004_reconfirmed_outcomes.sql",
+      "0005_scoring.sql",
     ]);
   });
 
@@ -40,9 +42,30 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("database", () => {
     expect(await count("team_members")).toBe(members);
     expect(await count("invites")).toBe(9);
     expect(await count("help_requests", "status = 'open'")).toBe(SEED_REQUESTS.length);
-    expect(await count("activity_events")).toBe(SEED_TEAMS.length + members + SEED_REQUESTS.length);
+    expect(await count("help_requests", "status = 'resolved'")).toBe(SEED_RESOLUTIONS.length);
+    // Each resolution: posted, accepted, outcome submitted, confirmed, and its award.
+    const resolutionEvents = SEED_RESOLUTIONS.length * 5;
+    expect(await count("activity_events")).toBe(SEED_TEAMS.length + members + SEED_REQUESTS.length + resolutionEvents);
     expect(seeded.invites).toHaveLength(9);
     for (const { code } of seeded.invites) expect(code).toMatch(/^[A-Z]+-[A-HJ-NP-Z2-9]{4}$/);
+  });
+
+  it("gives Team Maple 65 points: Aurora, Orbit, Cedar, then Aurora again", async () => {
+    const receipt = await getReceipt(sql as never, "maple");
+    expect(receipt.lines.map((line) => [line.helpedTeam.name, line.points])).toEqual([
+      ["Aurora", 20],
+      ["Orbit", 20],
+      ["Cedar", 20],
+      ["Aurora", 5],
+    ]);
+    expect(receipt.total).toBe(65);
+    const [top] = await sql.begin((tx) => getLeaderboard(tx));
+    expect(top).toMatchObject({ rank: 1, team: { slug: "maple" }, points: 65, teamsHelped: 3, resolutions: 4 });
+    expect(await count("points_ledger")).toBe(SEED_RESOLUTIONS.length);
+  });
+
+  it("passes the ledger check after seeding", async () => {
+    expect((await sql.begin((tx) => verifyLedger(tx))).problems).toEqual([]);
   });
 
   it("refuses to seed twice", async () => {

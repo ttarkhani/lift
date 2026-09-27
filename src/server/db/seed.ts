@@ -1,6 +1,10 @@
+import { postRequestSchema, submitOutcomeSchema } from "@/domain/requests";
 import { inviteCode } from "@/domain/teams";
+import type { EvidenceKind } from "@/domain/types";
+import type { Viewer } from "@/server/auth/viewer";
 import type { Sql, Tx } from "@/server/db/client";
 import { emitActivity } from "@/server/events";
+import { acceptRequest, confirmOutcome, postRequest, submitOutcome } from "@/server/services/requests";
 
 type SeedTeam = {
   slug: string;
@@ -79,10 +83,75 @@ export const SEED_REQUESTS = [
   },
 ];
 
+type SeedResolution = {
+  team: string;
+  title: string;
+  description: string;
+  tags: string[];
+  tried: string;
+  outcome: { summary: string; evidenceKind: EvidenceKind; evidence: string; inPerson?: boolean };
+};
+
+/**
+ * Blockers Team Maple fixed, in the order they're confirmed: Aurora, Orbit, Cedar, then
+ * Aurora again, for 20 + 20 + 20 + 5 = 65 points.
+ */
+export const SEED_RESOLUTIONS: SeedResolution[] = [
+  {
+    team: "aurora",
+    title: "Container restarts in a loop after deploying",
+    description: "The dashboard container starts, then restarts every few seconds on the VM.",
+    tags: ["deployment", "docker"],
+    tried: "Checked the logs and rebuilt the image.",
+    outcome: {
+      summary: "Repaired the deployment configuration: the health check pointed at the wrong port, so the container kept being restarted.",
+      evidenceKind: "code_diff",
+      evidence: "-      test: [\"CMD\", \"curl\", \"-f\", \"http://localhost:8080/health\"]\n+      test: [\"CMD\", \"curl\", \"-f\", \"http://localhost:3000/health\"]",
+    },
+  },
+  {
+    team: "orbit",
+    title: "API can't reach the database after a few minutes",
+    description: "Queries work at first, then every request fails with a connection timeout.",
+    tags: ["APIs", "debugging"],
+    tried: "Restarted the server, which fixes it for a few minutes.",
+    outcome: {
+      summary: "Identified a database connection leak: connections weren't released after errors, so the pool ran out.",
+      evidenceKind: "text",
+      evidence: "Wrapped each query in try/finally so the client is always released, and capped the pool at 10.",
+      inPerson: true,
+    },
+  },
+  {
+    team: "cedar",
+    title: "Keyboard users can't reach the submit button",
+    description: "Tabbing through the form skips the submit button entirely.",
+    tags: ["design", "accessibility"],
+    tried: "Added tabindex to the button.",
+    outcome: {
+      summary: "Tested the keyboard navigation with them and replaced the clickable div with a real button.",
+      evidenceKind: "text",
+      evidence: "The submit control was a div with an onClick handler. A button element is focusable and works with Enter and Space.",
+      inPerson: true,
+    },
+  },
+  {
+    team: "aurora",
+    title: "Weather API calls time out at the venue",
+    description: "Calls to the weather API hang for 30 seconds and then fail, only on venue Wi-Fi.",
+    tags: ["APIs", "networking"],
+    tried: "Raised the client timeout.",
+    outcome: {
+      summary: "Resolved a separate API issue: moved the weather call to the server, which skips the venue proxy.",
+      evidenceKind: "link",
+      evidence: "https://github.com/example/aurora/pull/14",
+    },
+  },
+];
 
 export type SeedResult = { invites: { team: string; code: string }[] };
 
-/** Fills an empty database with teams, members, invite codes, and open requests. */
+/** Fills an empty database with teams, members, invite codes, open requests, and Team Maple's four fixes. */
 export async function seed(sql: Sql): Promise<SeedResult> {
   return (await sql.begin(async (tx) => {
     const [{ count }] = await tx<{ count: number }[]>`select count(*)::int as count from teams`;
@@ -92,6 +161,7 @@ export async function seed(sql: Sql): Promise<SeedResult> {
 
     const teamIds = new Map<string, string>();
     const firstMember = new Map<string, string>();
+    const viewers = new Map<string, Viewer>();
     const invites: SeedResult["invites"] = [];
 
     for (const team of SEED_TEAMS) {
@@ -105,7 +175,16 @@ export async function seed(sql: Sql): Promise<SeedResult> {
 
       for (const [i, member] of team.members.entries()) {
         const userId = await addMember(tx, teamId, `seed|${team.slug}-${i + 1}`, member);
-        if (i === 0) firstMember.set(team.slug, userId);
+        if (i === 0) {
+          firstMember.set(team.slug, userId);
+          viewers.set(team.slug, {
+            userId,
+            displayName: member.name,
+            email: null,
+            team: { id: teamId, slug: team.slug, name: team.name, isDemo: team.isDemo },
+            roles: [],
+          });
+        }
       }
 
       const code = inviteCode(team.slug);
@@ -122,6 +201,16 @@ export async function seed(sql: Sql): Promise<SeedResult> {
         returning id
       `;
       await emitActivity(tx, { type: "request_posted", teamId, requestId, actorUserId: userId });
+    }
+
+    // Resolved through the real services, so the awards and ledger are exactly what the app writes.
+    const maple = viewers.get("maple")!;
+    for (const resolution of SEED_RESOLUTIONS) {
+      const requester = viewers.get(resolution.team)!;
+      const { id } = await postRequest(tx, requester, postRequestSchema.parse(resolution));
+      await acceptRequest(tx, maple, id);
+      await submitOutcome(tx, maple, id, submitOutcomeSchema.parse(resolution.outcome));
+      await confirmOutcome(tx, requester, id);
     }
 
     return { invites };
