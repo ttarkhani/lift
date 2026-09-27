@@ -80,3 +80,12 @@
 - The seed resolves Maple's four blockers in its one transaction, so they share a confirmation time and are ordered by award id.
 - `npm run ledger:verify` is read-only and runs in one repeatable-read snapshot, so it's safe against production.
 - Test cleanup (`removeTeams`) turns off the ledger's append-only trigger inside its own transaction to remove committed test data. The concurrent-confirmation test holds both confirmations at the award insert with a share lock on `awards` and releases them together; without the pair lock it fails with two 20-point awards.
+
+### Design change: Hack the Hill III theme
+- Not a numbered step. The look now matches Hack the Hill III (hackthehill.com and its tracker app), with the colors taken from their CSS: maroon `#84010B`, ink `#650014`, cream `#FFF3B6`, golden `#F6BF70`, brick `#C11F25`, sand `#F5C18C`, and the tracker's hero gradient `#C7734F → #EA8A60 → #EE9E6F → #F6BC83`. The existing tokens kept their names and were re-mapped; `brick`, `sand`, and `sunset-1`–`4` were added. Details and the contrast table are in `docs/design.md`.
+- Rubik (the event's interface face, OFL) is used for headings, the wordmark, nav, and the hero. Body text and forms stay in Atkinson Hyperlegible Next, because Rubik's `I`, `l`, and `1` are hard to tell apart at arm's length. Coolvetica, the event's display face, is commercial, so the hero uses Rubik ExtraBold instead.
+- `ink-soft` is now 82% ink (was 72%) so secondary paragraphs still reach 7:1 on the cream ground.
+- Radii went from 4/8px to 6/12px; buttons use the 12px radius, like the site's "Apply Now".
+- The landing page's explanatory paragraph moved below the hero band, because the gradient's top stop can't carry body text at 7:1. The event line sits in a maroon pill for the same reason.
+- None of the event's logo, wordmark, illustrations, leaf art, or files are used; the three hero leaves are drawn from scratch and never move. The footer says "Built at Hack the Hill III" and nothing presents Lifts as official.
+- Added a themed `not-found.tsx`, since Next's built-in 404 ignored the theme (and went black in dark mode). Its action is "Go to the board".
