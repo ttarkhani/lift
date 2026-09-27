@@ -33,20 +33,20 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
       >
         Skip to content
       </a>
-      <header className="border-b-2 border-rule bg-paper">
+      <header className="border-b-2 border-stamp bg-sand">
         <nav
           aria-label="Main"
           className="mx-auto flex max-w-wide flex-wrap items-center justify-between gap-x-6 px-4 sm:flex-nowrap"
         >
-          <Link href="/" className="inline-flex min-h-tap items-center gap-1.5 text-xl font-bold">
-            <LiftIcon className="text-stamp" />
+          <Link href="/" className="inline-flex min-h-tap items-center gap-1.5 font-display text-xl font-extrabold text-stamp">
+            <LiftIcon />
             Lifts
           </Link>
           {/* Plain anchors: the Auth0 routes are served by the proxy, not the client router. */}
           <div className="flex items-center gap-4 sm:order-last">
             {viewer ? (
               <>
-                <p className="text-sm text-ink-soft">
+                <p className="text-sm text-ink">
                   {viewer.team ? (
                     `Team ${viewer.team.name}`
                   ) : organizer ? (
@@ -75,6 +75,9 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
       <main id="main" className="px-4 pt-6 pb-16">
         {children}
       </main>
+      <footer className="border-t-2 border-rule px-4 py-6 text-center text-sm text-ink-soft">
+        Built at Hack the Hill III
+      </footer>
     </>
   );
 }
