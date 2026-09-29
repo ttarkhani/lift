@@ -163,3 +163,4 @@ docs/                 brief, progress, design, and the Auth0 setup guide
 - Moustapha Ahmed
 - Rayan Ketata
 - Nabil Hersi
+- Zakaria Kandid
