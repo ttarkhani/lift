@@ -59,6 +59,14 @@ export function explainAward(award: Pick<PairAward, "helperName" | "recipientNam
   return `${between}: ${points} points${points === 0 ? ", still recorded" : ""}.`;
 }
 
+/**
+ * The result message for "Confirm it's fixed": "Fix confirmed. Team Maple earned 20 points."
+ * A reconfirmation after a reopen has no new award, so it only says "Fix confirmed."
+ */
+export function confirmMessage(award: { helpingTeam: { name: string }; points: number } | null): string {
+  return award ? `Fix confirmed. Team ${award.helpingTeam.name} earned ${award.points} points.` : "Fix confirmed.";
+}
+
 export function explainReversal(reason: string): string {
   const trimmed = reason.trim();
   return `Reversed by an organizer: ${trimmed}${/[.!?]$/.test(trimmed) ? "" : "."}`;

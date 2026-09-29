@@ -21,8 +21,7 @@ export type Team = Serialized<TeamSummary>;
 export function ThreadNotice() {
   return (
     <p role="note" className="rounded-md border-2 border-stamp bg-stamp-wash px-4 py-3 text-sm">
-      <strong>This thread is visible to both teams and organizers.</strong> An AI model reviews it for
-      scoring integrity.
+      <strong>This thread is visible to both teams and organizers.</strong>
     </p>
   );
 }
@@ -201,6 +200,8 @@ export function OutcomeCard({
   timeZone,
   decision,
   award,
+  teamsPath = "/teams",
+  linkEvidence = true,
 }: {
   outcome: Outcome;
   requester: Team;
@@ -209,6 +210,10 @@ export function OutcomeCard({
   decision: React.ReactNode;
   /** The request's award, shown on the confirmed outcome it came from. */
   award: Award | null;
+  /** Where the receipt link points: "/teams" in the app, "/demo/teams" in the demo. */
+  teamsPath?: string;
+  /** False shows link evidence as text, for the demo, whose URLs are invented. */
+  linkEvidence?: boolean;
 }) {
   const isUrl = outcome.evidenceKind === "link" || outcome.evidenceKind === "screenshot_link";
   return (
@@ -223,7 +228,9 @@ export function OutcomeCard({
       </p>
       <p className="mt-3">{outcome.summary}</p>
       <h3 className="mt-4 font-bold">Evidence: {EVIDENCE_KIND_LABELS[outcome.evidenceKind]}</h3>
-      {isUrl ? (
+      {isUrl && !linkEvidence ? (
+        <p className="mt-1 font-mono text-sm break-all">{outcome.evidence}</p>
+      ) : isUrl ? (
         <a
           href={outcome.evidence}
           className="mt-1 inline-block font-mono text-sm break-all text-stamp underline underline-offset-4 hover:text-ink"
@@ -261,7 +268,7 @@ export function OutcomeCard({
           </span>
           {outcome.state === "confirmed" && outcome.team && (
             <Link
-              href={`/teams/${outcome.team.slug}`}
+              href={`${teamsPath}/${outcome.team.slug}`}
               className="text-stamp underline underline-offset-4 hover:text-ink"
             >
               See Team {outcome.team.name}&apos;s receipt

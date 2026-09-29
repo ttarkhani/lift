@@ -17,7 +17,7 @@
 - Live updates use polling every 3–5 seconds.
 - Evidence in the MVP is links, diffs, or text. Screenshot upload is a stretch goal.
 - Demo teams (`is_demo`) are labelled "Demo" and hidden from the leaderboard unless someone turns them on.
-- Help threads show a notice: visible to both teams and organizers, and reviewed by an AI model for scoring integrity.
+- Help threads show a notice that reads only "This thread is visible to both teams and organizers."
 - Leaderboard ties: more distinct teams helped wins, then whoever reached the score first.
 - Our proposed award is "Best Community Contribution". It is not an official Hack the Hill prize, and it is never called "Open Source".
 
@@ -89,3 +89,18 @@
 - The landing page's explanatory paragraph moved below the hero band, because the gradient's top stop can't carry body text at 7:1. The event line sits in a maroon pill for the same reason.
 - None of the event's logo, wordmark, illustrations, leaf art, or files are used; the three hero leaves are drawn from scratch and never move. The footer says "Built at Hack the Hill III" and nothing presents Lifts as official.
 - Added a themed `not-found.tsx`, since Next's built-in 404 ignored the theme (and went black in dark mode). Its action is "Go to the board".
+
+### Final change: public demo
+- Not a numbered step. `/demo` is a read-only tour with invented teams that anyone can open without logging in: an intro with the 20/5/0 table and the A, B, C, B = 45 example, the board of open blockers, every blocker's page (`/demo/requests/1`–`9`), the leaderboard, and each team's receipt. It needed no auth change: no guest session, cookie, or account, and `src/proxy.ts` is unchanged.
+- The demo never reaches real data. Its pages (`src/app/demo/`) and its components and fixtures (`src/demo/`) never open a database connection, call a service, read the env or the session, or call an `/api` route. An ESLint `no-restricted-imports` rule on those folders blocks `@/server/**`, `postgres`, `@auth0/*`, `next/headers`, `@/lib/api`, `@/lib/usePoll`, `BoardList`, `RequestThread`, and `app-shell` (type-only imports are allowed), and `no-restricted-globals` blocks `fetch`. `src/demo/boundary.test.ts` lints sample imports to prove the rule fires, and also follows every runtime import from the demo's files, however indirect, to check none reaches `src/server/`.
+- `Page` moved to `src/components/page.tsx`, because `app-shell.tsx` loads the session code; `app-shell` re-exports it, so other pages didn't change.
+- The seed's teams, blockers, and Team Maple's four fixes moved to `src/demo/story.ts`. The seed imports them (and re-exports them for its tests), so `seed()` and `npm run db:seed` behave as before. `src/demo/fixtures.ts` adds what the seed lacks: times on Saturday, September 26 in `America/Toronto` (a constant, not `EVENT_TIMEZONE`), and the chat in one thread. Request, outcome, and award ids follow the seed's insert order, so demo request #6 is the same blocker as #6 in a freshly seeded database.
+- Points come from `scoreAwards`, so they can't drift from the rule. Maple's fixes are confirmed at different times in the demo and at one time in the seed; both orders give 20, 20, 20, 5 = 65, which a test checks. Only Maple has awards, so the demo leaderboard has one row. Its ranking helper sorts the way `getLeaderboard`'s SQL does.
+- Every team in the demo is labelled Demo (the demo's views set `isDemo`; the seed's flags are unchanged), and every page has the Demo badge and the banner "This is a demo with invented teams. Nothing here is real or saved." with "Back to Lifts" and "Log in". Every other link stays inside the demo, including a demo `not-found` page and a catch-all for unknown `/demo/…` addresses.
+- The root layout still wraps the demo in `AppShell`. `HeaderSwitch`, a small client component, shows `DemoHeader` (Tour, Board, Leaderboard, Team Maple) on `/demo` and the paths under it, and the app's header everywhere else. `AppShell` still reads the viewer for its header on demo pages, as on every page; the demo's own code never does. `NavLinks` gained an `exact` option, so "Tour" isn't current on every demo page.
+- The worked thread is #6: Maple fixes Aurora's restart loop. It opens at "Outcome submitted", and "Confirm it's fixed" switches the page to the confirmed version in the browser only, with "Fix confirmed. Team Maple earned 20 points." and the scoring explanation. No request is sent, and a reload starts over. Maple's receipt and the leaderboard always count it. The receipt's "Confirmation" link opens it already confirmed (`?confirmed=1`).
+- "Help with this" and "Not fixed yet" are shown disabled with "Demo only" text. The composer, "Post a blocker", the board filters, "Reopen blocker", and the leaderboard's demo toggle are left out.
+- The seed's link evidence is an invented URL, so the demo shows it as text (`OutcomeCard`'s `linkEvidence`), and the receipt's "Evidence" links go to the outcome. `OutcomeCard` also takes `teamsPath`, so "See Team Maple's receipt" stays in the demo.
+- Extracted for reuse: `LeaderboardList` (both leaderboards) and `confirmMessage` in `src/domain/scoring.ts` (the confirm route and the demo).
+- The landing page's "See the board", which sent signed-out visitors to the login page, is now "Try the demo".
+- The help thread notice now reads only "This thread is visible to both teams and organizers." The review it used to mention was never built.

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Page } from "@/components/app-shell";
 import { EmptyState } from "@/components/empty-state";
+import { LeaderboardList } from "@/components/leaderboard-list";
 import { PageHeader } from "@/components/page-header";
-import { StatusBadge } from "@/components/status-badge";
 import { getPageViewer } from "@/server/auth/pages";
 import { withTx } from "@/server/db/client";
 import { getLeaderboard } from "@/server/services/awards";
@@ -39,35 +39,7 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
           The first team to help another team gets on the board.
         </EmptyState>
       ) : (
-        <ol className="divide-y-2 divide-ground rounded-md border-2 border-rule bg-paper">
-          {rows.map((row) => (
-            <li key={row.team.slug} className="flex items-center gap-4 px-4 py-3">
-              <span className="w-8 shrink-0 font-mono text-lg font-bold text-ink-soft tabular-nums">
-                <span className="sr-only">Rank </span>
-                {row.rank}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="flex flex-wrap items-center gap-2">
-                  <Link
-                    href={`/teams/${row.team.slug}`}
-                    className="font-bold underline-offset-4 hover:text-stamp hover:underline"
-                  >
-                    Team {row.team.name}
-                  </Link>
-                  {row.team.isDemo && <StatusBadge status="demo" />}
-                </p>
-                <p className="text-sm text-ink-soft">
-                  Helped {row.teamsHelped} {row.teamsHelped === 1 ? "team" : "teams"} ·{" "}
-                  {row.resolutions} {row.resolutions === 1 ? "fix" : "fixes"}
-                </p>
-              </div>
-              <p className="shrink-0 text-right">
-                <span className="font-mono text-xl font-bold tabular-nums">{row.points}</span>
-                <span className="block text-xs text-ink-soft">points</span>
-              </p>
-            </li>
-          ))}
-        </ol>
+        <LeaderboardList rows={rows} />
       )}
     </Page>
   );

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   awardDecisionSchema,
+  confirmMessage,
   explainReversal,
   orderPair,
   pairKey,
@@ -142,6 +143,18 @@ describe("explanations", () => {
   it("quote the organizer's reason for a reversal without doubling its full stop", () => {
     expect(explainReversal("Duplicate request")).toBe("Reversed by an organizer: Duplicate request.");
     expect(explainReversal("Duplicate request.")).toBe("Reversed by an organizer: Duplicate request.");
+  });
+});
+
+describe("confirmMessage", () => {
+  it("names the helping team and the points it earned", () => {
+    expect(confirmMessage({ helpingTeam: { name: "Maple" }, points: 20 })).toBe(
+      "Fix confirmed. Team Maple earned 20 points.",
+    );
+  });
+
+  it("says only that the fix is confirmed when there's no new award", () => {
+    expect(confirmMessage(null)).toBe("Fix confirmed.");
   });
 });
 

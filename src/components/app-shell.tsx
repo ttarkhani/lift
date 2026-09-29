@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { connection } from "next/server";
+import { DemoHeader } from "@/demo/demo-header";
 import { getViewer } from "@/server/auth/guards";
 import { isOrganizer } from "@/server/auth/viewer";
-import { cx } from "@/lib/cx";
+import { HeaderSwitch } from "./header-switch";
 import { LiftIcon } from "./icons";
 import { NavLinks } from "./nav-links";
+
+// Page lives in its own module so the public demo can use it without loading the session code.
+export { Page } from "./page";
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
   // The header depends on the session, so every page renders per request.
@@ -25,6 +29,48 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   const authLink =
     "inline-flex min-h-tap items-center font-bold text-stamp underline underline-offset-4 hover:text-ink";
 
+  const header = (
+    <header className="border-b-2 border-stamp bg-sand">
+      <nav
+        aria-label="Main"
+        className="mx-auto flex max-w-wide flex-wrap items-center justify-between gap-x-6 px-4 sm:flex-nowrap"
+      >
+        <Link href="/" className="inline-flex min-h-tap items-center gap-1.5 font-display text-xl font-extrabold text-stamp">
+          <LiftIcon />
+          Lifts
+        </Link>
+        {/* Plain anchors: the Auth0 routes are served by the proxy, not the client router. */}
+        <div className="flex items-center gap-4 sm:order-last">
+          {viewer ? (
+            <>
+              <p className="text-sm text-ink">
+                {viewer.team ? (
+                  `Team ${viewer.team.name}`
+                ) : organizer ? (
+                  "Organizer"
+                ) : (
+                  <Link href="/join" className="underline underline-offset-4 hover:text-ink">
+                    Join your team
+                  </Link>
+                )}
+              </p>
+              <a href="/auth/logout" className={authLink}>
+                Log out
+              </a>
+            </>
+          ) : (
+            <a href="/auth/login" className={authLink}>
+              Log in
+            </a>
+          )}
+        </div>
+        <div className="-mx-2 w-full sm:mx-0 sm:w-auto sm:flex-1">
+          <NavLinks links={links} />
+        </div>
+      </nav>
+    </header>
+  );
+
   return (
     <>
       <a
@@ -33,45 +79,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
       >
         Skip to content
       </a>
-      <header className="border-b-2 border-stamp bg-sand">
-        <nav
-          aria-label="Main"
-          className="mx-auto flex max-w-wide flex-wrap items-center justify-between gap-x-6 px-4 sm:flex-nowrap"
-        >
-          <Link href="/" className="inline-flex min-h-tap items-center gap-1.5 font-display text-xl font-extrabold text-stamp">
-            <LiftIcon />
-            Lifts
-          </Link>
-          {/* Plain anchors: the Auth0 routes are served by the proxy, not the client router. */}
-          <div className="flex items-center gap-4 sm:order-last">
-            {viewer ? (
-              <>
-                <p className="text-sm text-ink">
-                  {viewer.team ? (
-                    `Team ${viewer.team.name}`
-                  ) : organizer ? (
-                    "Organizer"
-                  ) : (
-                    <Link href="/join" className="underline underline-offset-4 hover:text-ink">
-                      Join your team
-                    </Link>
-                  )}
-                </p>
-                <a href="/auth/logout" className={authLink}>
-                  Log out
-                </a>
-              </>
-            ) : (
-              <a href="/auth/login" className={authLink}>
-                Log in
-              </a>
-            )}
-          </div>
-          <div className="-mx-2 w-full sm:mx-0 sm:w-auto sm:flex-1">
-            <NavLinks links={links} />
-          </div>
-        </nav>
-      </header>
+      <HeaderSwitch app={header} demo={<DemoHeader />} />
       <main id="main" className="px-4 pt-6 pb-16">
         {children}
       </main>
@@ -80,9 +88,4 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
       </footer>
     </>
   );
-}
-
-/** Page width: one 40rem column, or 72rem for organizer screens. */
-export function Page({ wide, children }: { wide?: boolean; children: React.ReactNode }) {
-  return <div className={cx("mx-auto w-full", wide ? "max-w-wide" : "max-w-page")}>{children}</div>;
 }

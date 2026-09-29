@@ -4,12 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cx } from "@/lib/cx";
 
-export function NavLinks({ links }: { links: { label: string; href: string }[] }) {
+type NavLink = {
+  label: string;
+  href: string;
+  /** Only current on this exact path, not on the paths under it (the demo's tour at /demo). */
+  exact?: boolean;
+};
+
+export function NavLinks({ links }: { links: NavLink[] }) {
   const pathname = usePathname();
   return (
     <ul className="flex flex-wrap gap-1 pb-2 sm:pb-0">
-      {links.map(({ label, href }) => {
-        const current = pathname === href || pathname.startsWith(`${href}/`);
+      {links.map(({ label, href, exact }) => {
+        const current = pathname === href || (!exact && pathname.startsWith(`${href}/`));
         return (
           <li key={href}>
             <Link

@@ -41,8 +41,8 @@ export default async function Home() {
                 <a href={loginHref("/join")} className={buttonClasses({ block: true })}>
                   Log in to join your team
                 </a>
-                <Button href="/board" variant="secondary" block>
-                  See the board
+                <Button href="/demo" variant="secondary" block>
+                  Try the demo
                 </Button>
               </>
             )}

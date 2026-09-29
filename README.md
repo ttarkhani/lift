@@ -4,6 +4,8 @@ Lifts rewards hackathon teams for helping other teams get unblocked, with eviden
 
 Built at Hack the Hill III (uOttawa, September 25–27, 2026). Live at **https://lifts-mbjt.onrender.com**. It runs on a free Render instance, so the first visit after a quiet spell can take about a minute to load.
 
+Try the demo at **https://lifts-mbjt.onrender.com/demo**, a read-only tour with invented teams. No login needed.
+
 ## How it works
 
 1. **Join your team.** Use the invite code from the organizers and list the skills you can help with.
@@ -38,7 +40,7 @@ Helping a new team always starts at 20. For example, A helps B, B, C, then B: 20
 
 | Page | What it's for |
 |---|---|
-| `/` | What Lifts is, and sign-in |
+| `/` | What Lifts is, sign-in, and a link to the demo |
 | `/join` | Join your team with an invite code |
 | `/board` | Open blockers, filterable by tag and by your own team's |
 | `/requests/new` | Post a blocker |
@@ -46,6 +48,7 @@ Helping a new team always starts at 20. For example, A helps B, B, C, then B: 20
 | `/leaderboard` | Team rankings. Demo teams are hidden unless you switch them on. Public. |
 | `/teams/[slug]` | A team's contribution receipt. Public. |
 | `/organizer/teams` | Organizers create teams, issue invite codes, and move members |
+| `/demo` | A read-only tour with invented teams: the board, a worked help thread whose fix you can confirm in the page, the leaderboard, and Team Maple's receipt. Nothing is saved, and it never reads the database. Public. |
 
 ## Stack
 
@@ -54,7 +57,7 @@ Helping a new team always starts at 20. For example, A helps B, B, C, then B: 20
 - **Tiger Cloud (PostgreSQL 18 + TimescaleDB)**: teams, requests, awards, the points ledger, and the activity history, with continuous aggregates for analytics.
 - **Auth0**: sign-in, team membership, and the organizer role.
 - **Render**: hosts the app and redeploys on every push to `main`.
-- **Vitest and GitHub Actions**: 22 test files, including database integration tests that CI runs against a TimescaleDB container.
+- **Vitest and GitHub Actions**: 24 test files, including database integration tests that CI runs against a TimescaleDB container.
 
 ## Getting started
 
@@ -129,6 +132,7 @@ The Auth0 application lists `<APP_BASE_URL>/auth/callback` as a callback URL and
 src/app/              pages and thin API route handlers
 src/components/       UI components
 src/lib/              client helpers
+src/demo/             the public demo's invented data (shared with the seed) and components
 src/domain/           pure logic and types: scoring, request states, schemas
 src/server/           env, errors, auth, database, and activity events
 src/server/services/  business rules and state changes
@@ -151,6 +155,7 @@ docs/                 brief, progress, design, and the Auth0 setup guide
 | 4 | Scoring: the 20/5/0 pair rule, duplicate-award prevention, auditable points ledger | Nabil Hersi |
 | 5 | Presentation: the Hack the Hill III theme and the judges' demo | Whole Team |
 | 6 | Deployment and verification: Render and Tiger Cloud in production, end-to-end testing, fixes, demo rehearsal | Moustapha Ahmed |
+| Final change | Public demo: a read-only tour at `/demo` with invented teams, no login needed | ZakariaKandid |
 
 ## Team
 
